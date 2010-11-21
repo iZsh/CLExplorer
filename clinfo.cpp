@@ -14,13 +14,51 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "clstats.h"
-
+#include "clinfo.h"
 #include <iostream>
 
 using namespace std;
 
-void device_stats(cl_device_id device_id)
+void platform_info(cl_platform_id platform_id)
+{
+  int err;
+  size_t returned_size;
+  
+  cl_char platform_version[1024] = {0};
+  cl_char platform_name[1024] = {0};
+  cl_char platform_vendor[1024] = {0};
+  cl_char platform_extensions[1024] = {0};
+  
+  err = clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, sizeof (platform_version), platform_version, &returned_size);
+  err|= clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, sizeof (platform_name), platform_name, &returned_size);
+  err|= clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR, sizeof (platform_vendor), platform_vendor, &returned_size);
+  err|= clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, sizeof (platform_extensions), platform_extensions, &returned_size);
+
+  cout << "===============================================================" << endl;
+  cout << "Platform Version: " << platform_version << endl;
+  cout << "Platform Name: " << platform_name << endl;
+  cout << "Platform Vendor: " << platform_name << endl;
+  cout << "Platform Extensions: " << platform_extensions << endl;
+  cout << "===============================================================" << endl;  
+}
+
+void get_all_platforms_info()
+{
+  cl_uint nb_platforms = 0;
+  cl_int err = 0;
+  cl_platform_id platforms[16] = {0};
+  
+  err = clGetPlatformIDs(16, platforms, &nb_platforms);
+  if (err != CL_SUCCESS) {
+    cout << "Cannot get the platforms listing" << endl;
+    return;
+  }
+	
+  for (cl_uint i = 0; i < nb_platforms; ++i)
+    platform_info(platforms[i]);
+}
+
+void device_info(cl_device_id device_id)
 {
   int err;
 	size_t returned_size;
@@ -100,7 +138,7 @@ void device_stats(cl_device_id device_id)
   err|= clGetDeviceInfo(device_id, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(image2d_max_width), &image2d_max_width, &returned_size);
   err|= clGetDeviceInfo(device_id, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(image2d_max_height), &image2d_max_height, &returned_size);
   err|= clGetDeviceInfo(device_id, CL_DEVICE_MAX_SAMPLERS, sizeof(max_samplers), &max_samplers, &returned_size);
-  
+
   cout << "===============================================================" << endl;
   cout << "Vendor: " << vendor_name << endl;
   cout << "Device Name: " << device_name << endl;
@@ -149,10 +187,80 @@ void device_stats(cl_device_id device_id)
   cout << "• Max width of 2D image: " << image2d_max_width << endl;
   cout << "• Max height of 2D image: " << image2d_max_height << endl;	
   cout << "• Max Samplers: " << max_samplers << endl;
+  cout << "• Supported Formats: " << endl;
+  get_device_supported_image_formats(device_id);
   cout << endl;
 }
 
-void get_all_devices_stats()
+const char * channel_order_to_s(cl_channel_order channel_order)
+{
+  switch (channel_order) {
+    case CL_R: return "CL_R";
+    case CL_A: return "CL_A";
+    case CL_INTENSITY: return "CL_INTENSITY";
+    case CL_LUMINANCE: return "CL_LUMINANCE";
+    case CL_RG: return "CL_RG";
+    case CL_RA: return "CL_RA";
+    case CL_RGB: return "CL_RGB";
+    case CL_RGBA: return "CL_RGBA";
+    case CL_ARGB: return "CL_ARGB";
+    case CL_BGRA: return "CL_BGRA";
+    default: return "UNKNOWN";      
+  }
+}
+
+const char * channel_data_type_to_s(cl_channel_type channel_type)
+{
+  switch (channel_type) {
+    case CL_SNORM_INT8: return "CL_SNORM_INT8";
+    case CL_SNORM_INT16: return "CL_SNORM_INT16";
+    case CL_UNORM_INT8: return "CL_UNORM_INT8";
+    case CL_UNORM_INT16: return "CL_UNORM_INT16";
+    case CL_UNORM_SHORT_565: return "CL_UNORM_SHORT_565";
+    case CL_UNORM_SHORT_555: return "CL_UNORM_SHORT_555";
+    case CL_UNORM_INT_101010: return "CL_UNORM_INT_101010";
+    case CL_SIGNED_INT8: return "CL_SIGNED_INT8";
+    case CL_SIGNED_INT16: return "CL_SIGNED_INT16";
+    case CL_SIGNED_INT32: return "CL_SIGNED_INT32";
+    case CL_UNSIGNED_INT8: return "CL_UNSIGNED_INT8";
+    case CL_UNSIGNED_INT16: return "CL_UNSIGNED_INT16";
+    case CL_UNSIGNED_INT32: return "CL_UNSIGNED_INT32";
+    case CL_HALF_FLOAT: return "CL_HALF_FLOAT";
+    case CL_FLOAT: return "CL_FLOAT";
+    default: return "UNKNOWN";
+  }
+}
+
+static void get_device_supported_image_formats_(cl_device_id device_id, cl_mem_flags mem_flags)
+{
+  int err = 0;
+  cl_image_format image_formats[128] = {{0,0}};
+  cl_uint nb_image_formats = 0;
+  
+  cl_context context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+  
+  err = clGetSupportedImageFormats(context, mem_flags, CL_MEM_OBJECT_IMAGE2D, 128, image_formats, &nb_image_formats);
+  if (err != CL_SUCCESS) {
+    cout << "Could not get the list of supported image formats" << endl;
+    return;
+  }
+  for (int i = 0; i < nb_image_formats; ++i)
+    cout << "\t\t" << channel_order_to_s(image_formats[i].image_channel_order)
+    << "[" << channel_data_type_to_s(image_formats[i].image_channel_data_type) << "]"
+    << endl;
+  
+  clReleaseContext(context);  
+}
+
+void get_device_supported_image_formats(cl_device_id device_id)
+{
+  cout << "\t• Read Only:" << endl;
+  get_device_supported_image_formats_(device_id, CL_MEM_READ_ONLY);
+  cout << "\t• Write Only:" << endl;
+  get_device_supported_image_formats_(device_id, CL_MEM_WRITE_ONLY);
+}
+
+void get_all_devices_info()
 {
   cl_uint nb_devices = 0;
   cl_int err = 0;
@@ -165,5 +273,5 @@ void get_all_devices_stats()
   }
 	
   for (cl_uint i = 0; i < nb_devices; ++i)
-    device_stats(devices[i]);
+    device_info(devices[i]);
 }

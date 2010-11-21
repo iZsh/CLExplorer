@@ -14,12 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef IZ_CLSTATS_H__
-#define IZ_CLSTATS_H__
+#ifndef IZ_CLINFO_H__
+#define IZ_CLINFO_H__
 
 #include <OpenCL/OpenCL.h>
 
-void device_stats(cl_device_id device_id);
-void get_all_devices_stats();
+void platform_info(cl_platform_id platform_id);
+void get_all_platforms_info();
+
+void device_info(cl_device_id device_id);
+void get_all_devices_info();
+
+const char * channel_order_to_s(cl_channel_order channel_order);
+const char * channel_data_type_to_s(cl_channel_type channel_type);
+void get_device_supported_image_formats(cl_device_id device_id);
+
 
 #endif

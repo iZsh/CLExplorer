@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "clstats.h"
+#include "clinfo.h"
 
 int main (int argc, char * const argv[])
 {
-  get_all_devices_stats();
+  get_all_platforms_info();
+  get_all_devices_info();
   
   return 0;
 }
