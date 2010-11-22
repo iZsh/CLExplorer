@@ -175,7 +175,7 @@ void device_info(cl_device_id device_id)
   cout << "Work:" << endl;
   cout << "• Max Compute Units: " << max_compute_units << endl;
   cout << "• Max Work Group Size: " << max_work_group_size << endl;
-  cout << "• ∫Max Work Item Dims: " << max_work_item_dims << endl;
+  cout << "• Max Work Item Dims: " << max_work_item_dims << endl;
   for(size_t i=0;i<max_work_item_dims;i++) 
     cout << "• Max Work Items in Dim " << i + 1 << ": " << max_work_item_sizes[i] << endl;
   cout << endl;
