@@ -14,10 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <iostream>
 #include "clinfo.h"
+
+using namespace std;
 
 int main (int argc, char * const argv[])
 {
+  cout << "===================================" << endl;
+  cout << "CLExplorer -- Copyright 2010 iZsh" << endl;
+  cout << "A Simple OpenCL Explorer Tool" << endl;
+  cout << "===================================" << endl;
+  cout << endl;
+
   get_all_platforms_info();
   get_all_devices_info();
   
